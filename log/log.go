@@ -1,5 +1,13 @@
 package log
 
+// Package log implements simple key-value logging package.
+//
+// Package defines two log levels:
+// - debug messages used for debug purposes
+// - error messages that contains important information that require attention
+//
+// Output is formatted as flat JSON object containing only string values.
+
 import (
 	"encoding/json"
 	"fmt"

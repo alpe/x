@@ -1,5 +1,6 @@
 package router
 
+// Package router implements regexp based HTTP router.
 import (
 	"fmt"
 	"net/http"

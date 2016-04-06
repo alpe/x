@@ -1,5 +1,7 @@
 package web
 
+// Package web provides set of helper functions useful for building HTTP
+// services.
 import (
 	"encoding/json"
 	"fmt"
