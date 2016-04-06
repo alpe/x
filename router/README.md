@@ -14,7 +14,6 @@ Test string can use `{name}` to define named match that will catch everything
 except `/` character. It is possible to define custom regular expression rule
 after `:`, for example `{id:\d+}` to match only numbers.
 
-
 Example application using router:
 
 

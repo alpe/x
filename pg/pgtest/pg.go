@@ -5,9 +5,9 @@ import (
 	"errors"
 	"reflect"
 
-	"golang.org/x/net/context"
+	"github.com/optiopay/x/pg"
 
-	"github.com/optiopay/legal-service/pg"
+	"golang.org/x/net/context"
 )
 
 // WithDB assigns database mock to context, that can be retrived by pg.DB
