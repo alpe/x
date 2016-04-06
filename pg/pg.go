@@ -1,6 +1,6 @@
+// Package pg provides abstraction over jmoiron/sqlx package.
 package pg
 
-// Package pg provides abstraction over jmoiron/sqlx package.
 import (
 	"database/sql"
 	"errors"

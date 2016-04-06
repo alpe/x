@@ -1,5 +1,3 @@
-package log
-
 // Package log implements simple key-value logging package.
 //
 // Package defines two log levels:
@@ -7,6 +5,7 @@ package log
 // - error messages that contains important information that require attention
 //
 // Output is formatted as flat JSON object containing only string values.
+package log
 
 import (
 	"encoding/json"

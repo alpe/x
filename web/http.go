@@ -1,7 +1,7 @@
-package web
-
 // Package web provides set of helper functions useful for building HTTP
 // services.
+package web
+
 import (
 	"encoding/json"
 	"fmt"
