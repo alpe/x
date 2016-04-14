@@ -4,6 +4,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"sort"
 	"strings"
@@ -13,7 +14,9 @@ import (
 func main() {
 	for {
 		entry := make(map[string]string)
-		decode(&entry)
+		if err := decode(&entry); err == io.EOF {
+			return
+		}
 
 		level := pop(entry, "level")
 		msg := pop(entry, "msg")
