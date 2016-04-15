@@ -2,6 +2,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -34,36 +35,39 @@ func pop(row map[string]string, key string) string {
 }
 
 func fmtEntry(level, msg string, date time.Time, extra map[string]string) string {
-	chunks := make([]string, 0, 16)
+	var b bytes.Buffer
 
-	switch level {
-	case "DEBUG":
-		chunks = append(chunks, BgGreen, "D", NoColor)
-	case "ERROR":
-		chunks = append(chunks, BgRed, "E", NoColor)
-	default:
-		chunks = append(chunks, BgBlue, "X", NoColor)
-	}
-
-	chunks = append(chunks, FgGray, date.Format("15:04"), NoColor)
+	fmt.Fprint(&b, FgGray)
+	fmt.Fprint(&b, date.Format("15:04 "))
+	fmt.Fprint(&b, NoColor)
 
 	if len(msg) < 30 {
 		msg += strings.Repeat(" ", 30-len(msg))
 	}
-	chunks = append(chunks, msg)
+	if level == "ERROR" {
+		fmt.Fprint(&b, FgRed)
+		fmt.Fprint(&b, msg)
+		fmt.Fprint(&b, NoColor)
+	} else {
+		fmt.Fprint(&b, msg)
+	}
 
 	keys := make([]string, 0, len(extra))
 	for k := range extra {
+		if k == "file" {
+			continue
+		}
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 
 	for _, k := range keys {
 		v := extra[k]
-		chunks = append(chunks, fmt.Sprintf("%s%s%s=%s%s", FgGray, k, FgBlack, NoColor, v))
+		fmt.Fprintf(&b, " %s%s%s:%s ", FgGray, k, NoColor, v)
 	}
+	fmt.Fprintf(&b, " %sfile=%s%s", FgGray, extra["file"], NoColor)
 
-	return strings.Join(chunks, " ")
+	return b.String()
 }
 
 // console colors
@@ -75,7 +79,7 @@ const (
 	FgGreen  = "\033[32m"
 	FgYellow = "\033[33m"
 	FgBlue   = "\033[34m"
-	FgGray   = "\033[38;05;237m"
+	FgGray   = "\033[38;05;239m"
 
 	BgBlack  = "\033[40m"
 	BgRed    = "\033[41m"
