@@ -33,8 +33,13 @@ func CastErr(err error) error {
 	if err == sql.ErrNoRows {
 		return ErrNotFound
 	}
-	if err, ok := err.(*pq.Error); ok && err.Code == "23505" {
-		return ErrConflict
+	if err, ok := err.(*pq.Error); ok {
+		switch err.Code {
+		case "23505":
+			return ErrConflict
+		case "23503":
+			return ErrForeignKeyViolation
+		}
 	}
 	return err
 }
@@ -46,6 +51,10 @@ var (
 	// ErrConflict is returned when database query cannot be fulfilled because
 	// of constraint conflict
 	ErrConflict = errors.New("conflict")
+
+	// ErrForeignKeyViolation is returned when a insert or update on table
+	// violates foreign key constraint
+	ErrForeignKeyViolation = errors.New("foreign key violation")
 )
 
 // WithDB return context with given database instance bind to it. Use DB(ctx)
