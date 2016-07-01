@@ -44,11 +44,11 @@ type ExecResultMock struct {
 	Err      error
 }
 
-func (m *ExecResultMock) LastInsertId() (int64, error) {
+func (m ExecResultMock) LastInsertId() (int64, error) {
 	return m.InsertID, m.Err
 }
 
-func (m *ExecResultMock) RowsAffected() (int64, error) {
+func (m ExecResultMock) RowsAffected() (int64, error) {
 	return m.Affected, m.Err
 }
 
