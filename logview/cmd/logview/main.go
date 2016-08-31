@@ -12,10 +12,14 @@ import (
 )
 
 func main() {
+
 	scanner := bufio.NewScanner(os.Stdin)
 	entry := make(map[string]string)
 	for scanner.Scan() {
+
+		data := scanner.Bytes()
 		if err := json.Unmarshal(scanner.Bytes(), &entry); err != nil {
+			fmt.Println(string(data))
 			continue
 		}
 
