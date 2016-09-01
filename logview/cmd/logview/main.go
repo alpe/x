@@ -14,7 +14,7 @@ import (
 func main() {
 
 	scanner := bufio.NewScanner(os.Stdin)
-	entry := make(map[string]string)
+	entry := make(map[string]interface{})
 	for scanner.Scan() {
 
 		data := scanner.Bytes()
@@ -38,13 +38,13 @@ func main() {
 
 var decode = json.NewDecoder(os.Stdin).Decode
 
-func pop(row map[string]string, key string) string {
+func pop(row map[string]interface{}, key string) string {
 	val := row[key]
 	delete(row, key)
-	return val
+	return fmt.Sprint(val)
 }
 
-func fmtEntry(level, msg string, date time.Time, file string, extra map[string]string) string {
+func fmtEntry(level, msg string, date time.Time, file string, extra map[string]interface{}) string {
 	chunks := make([]string, 0, 16)
 
 	switch level {
@@ -74,7 +74,7 @@ func fmtEntry(level, msg string, date time.Time, file string, extra map[string]s
 	sort.Strings(keys)
 
 	for _, k := range keys {
-		v := extra[k]
+		v := pop(extra, k)
 		chunks = append(chunks, fmt.Sprintf("%s%s%s=%s%s", FgBlue, k, FgBlue, NoColor, v))
 	}
 
