@@ -13,10 +13,6 @@ import (
 	"time"
 )
 
-func init() {
-	mrand.Seed(42)
-}
-
 func TestTokenGenerator(t *testing.T) {
 	priv, pub, err := generateKeyPair()
 	if err != nil {
