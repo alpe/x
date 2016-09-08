@@ -18,11 +18,11 @@ func TestTokenGenerator(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s, err := NewSigner("testkey", priv)
+	s, err := NewSigner(priv)
 	if err != nil {
 		t.Fatalf("could not create Signer: %s", err)
 	}
-	v, err := NewVerifier("testKey", pub)
+	v, err := NewVerifier(pub)
 	if err != nil {
 		t.Fatalf("could not create Verifier: %s", err)
 	}
@@ -44,7 +44,8 @@ func TestTokenGenerator(t *testing.T) {
 		if err != nil {
 			t.Errorf("test %d failed: %s", i, err)
 		}
-		claims, err := v.Parse(token)
+		var claims map[string]interface{}
+		err = v.Parse(token, &claims)
 		if err != nil {
 			t.Errorf("test %d failed to decoce claims: %s", i, err)
 		}
@@ -65,11 +66,11 @@ func TestModifiedToken(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s, err := NewSigner("testkey", priv)
+	s, err := NewSigner(priv)
 	if err != nil {
 		t.Fatalf("could not create Signer: %s", err)
 	}
-	v, err := NewVerifier("testKey", pub)
+	v, err := NewVerifier(pub)
 	if err != nil {
 		t.Fatalf("could not create Verifier: %s", err)
 	}
@@ -92,7 +93,8 @@ func TestModifiedToken(t *testing.T) {
 			t.Errorf("test %d failed: %s", i, err)
 		}
 		token = replaceRandomRune(token)
-		claims, err := v.Parse(token)
+		var claims map[string]interface{}
+		err = v.Parse(token, &claims)
 		if err == nil {
 			t.Errorf("expected test %d to fail, %v", i, claims)
 		}

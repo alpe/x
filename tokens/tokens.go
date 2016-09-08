@@ -1,60 +1,73 @@
-// tokens provide generating and validaing JSON Web Tokens
+// tokens provide generating and validaing JSON Web Signatures
 package tokens
 
 import (
-	"crypto"
 	"crypto/rsa"
-	"crypto/x509"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 
-	"github.com/optiopay/go-oidc/jose"
+	"gopkg.in/square/go-jose.v1"
 )
 
+// Signer helps create JSON Web Signatures for any payload.
 type Signer struct {
-	rsa *jose.SignerRSA
+	rsa jose.Signer
 }
 
-// NewSigner creates a new Signer which can be used to create JWT.
+// NewSigner creates a Signer.
 //
-// It takes a unique id for a private-public key pair.
-func NewSigner(id string, privateKey io.Reader) (*Signer, error) {
-	raw, err := ioutil.ReadAll(privateKey)
+// The provided private key must be generated using RSA.
+func NewSigner(priv io.Reader) (*Signer, error) {
+	raw, err := ioutil.ReadAll(priv)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read private key: %s", err)
 	}
-	key, err := x509.ParsePKCS1PrivateKey(raw)
+	pk, err := jose.LoadPrivateKey(raw)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse private key: %s", err)
 	}
-	rsa := jose.NewSignerRSA(id, *key)
-	return &Signer{rsa}, nil
-}
-
-// Generate creates a Encoded JSON Web Token for the given claims.
-func (s *Signer) Generate(claims map[string]interface{}) (token string, err error) {
-	jwt, err := jose.NewSignedJWT(jose.Claims(claims), s.rsa)
+	s, err := jose.NewSigner(jose.PS256, pk)
 	if err != nil {
-		return "", fmt.Errorf("could not create JWT: %s", err)
+		return nil, fmt.Errorf("could not create signer: %s", err)
 	}
-	return jwt.Encode(), nil
+	return &Signer{s}, nil
 }
 
-type Verifier struct {
-	rsa *jose.VerifierRSA
-}
-
-// NewVerifier creates a new Verifier.
+// Generate creates an Encoded JSON Web Signature for the given payload.
 //
-// It takes a unique id for the given private-public key pair. It should
-// be the same ID used when for signing tokens using the Signer.
-func NewVerifier(id string, publicKey io.Reader) (*Verifier, error) {
-	raw, err := ioutil.ReadAll(publicKey)
+// The payload must be a pointer to the interface and must be JSON Marshallable.
+func (s *Signer) Generate(payload interface{}) (token string, err error) {
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		return "", fmt.Errorf("could not marshal payload")
+	}
+	jws, err := s.rsa.Sign(raw)
+	if err != nil {
+		return "", fmt.Errorf("could not sign payload: %s", err)
+	}
+	token, err = jws.CompactSerialize()
+	if err != nil {
+		return "", fmt.Errorf("could not serialize: %s", err)
+	}
+	return token, nil
+}
+
+// Verifier helps decode signed tokens.
+type Verifier struct {
+	pub *rsa.PublicKey
+}
+
+// NewVerifier creates a new Verifier given the public key.
+//
+// The public key must be of a RSA private-public key pair.
+func NewVerifier(pub io.Reader) (*Verifier, error) {
+	raw, err := ioutil.ReadAll(pub)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read public key: %s", err)
 	}
-	interm, err := x509.ParsePKIXPublicKey(raw)
+	interm, err := jose.LoadPublicKey(raw)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse public key: %s", err)
 	}
@@ -62,27 +75,24 @@ func NewVerifier(id string, publicKey io.Reader) (*Verifier, error) {
 	if !ok {
 		return nil, fmt.Errorf("cannot handle key type %T", interm)
 	}
-	rsa := &jose.VerifierRSA{
-		KeyID:     id,
-		PublicKey: *key,
-		Hash:      crypto.SHA256,
-	}
-	return &Verifier{rsa}, nil
+	return &Verifier{key}, nil
 }
 
-// Parse validates the provided token and decodes the claims encoded in it.
-func (v *Verifier) Parse(token string) (claims map[string]interface{}, err error) {
-	jwt, err := jose.ParseJWT(token)
+// Parse validates the token and extracts the payload from it.
+//
+// The payload must be a pointer to the interface and must be JSON Unmarshallable.
+func (v *Verifier) Parse(token string, payload interface{}) (err error) {
+	jws, err := jose.ParseSigned(token)
 	if err != nil {
-		return nil, fmt.Errorf("could not parse JWT: %s", err)
+		return fmt.Errorf("cannot parse token: %s", err)
 	}
-	err = v.rsa.Verify(jwt.Signature, []byte(jwt.Data()))
+	raw, err := jws.Verify(v.pub)
 	if err != nil {
-		return nil, fmt.Errorf("could not verify signature: %s", err)
+		return fmt.Errorf("could not verify token: %s", err)
 	}
-	claims, err = jwt.Claims()
+	err = json.Unmarshal(raw, payload)
 	if err != nil {
-		return nil, fmt.Errorf("could not decode claims: %s", err)
+		return fmt.Errorf("could not decode payload: %s", err)
 	}
-	return claims, nil
+	return nil
 }
