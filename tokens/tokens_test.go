@@ -129,5 +129,4 @@ func replaceRandomRune(in string) string {
 	out := []rune(in)
 	out[n] = out[n] + 5
 	return string(out)
-
 }
